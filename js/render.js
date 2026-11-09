@@ -1,80 +1,81 @@
-/* ============================================================
+﻿/* ============================================================
    RENDER — membuat isi halaman dari folder /data,
    termasuk slider foto yang bisa digeser dan lightbox.
    Biasanya file ini tidak perlu diubah.
    ============================================================ */
 (function () {
-    "use strict";
-    const D = window.DATA || {};
-    const P = D.profile || {};
-    const $ = (id) => document.getElementById(id);
-    const esc = (s) =>
-        String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    const initials = (n) => (n || "?").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-    const delay = (i) => `style="--d:${Math.min(i % 3, 3) * 0.08}s"`;
+  "use strict";
+  const D = window.DATA || {};
+  const P = D.profile || {};
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) =>
+    String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const initials = (n) => (n || "?").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  const delay = (i) => `style="--d:${Math.min(i % 3, 3) * 0.08}s"`;
 
-    /* ---------- Slider foto ---------- */
-    const PLACEHOLDER =
-        '<figure class="slide nosignal"><div class="bars"></div><b>NO SIGNAL</b><small>tambahkan foto</small></figure>';
+  /* ---------- Slider foto ---------- */
+  const PLACEHOLDER =
+    '<figure class="slide nosignal"><div class="bars"></div><b>NO SIGNAL</b><small>tambahkan foto</small></figure>';
 
-    function slider(photos, opts) {
-        opts = opts || {};
-        const list = (photos || []).map((p) => (typeof p === "string" ? { src: p, caption: "" } : p));
-        const slides = list.length
-            ? list.map((p) => `<figure class="slide"><img src="${esc(p.src)}" alt="${esc(p.caption || "")}" draggable="false" loading="lazy">${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ""}</figure>`).join("")
-            : PLACEHOLDER;
-        const multi = list.length > 1;
-        return `
+  function slider(photos, opts) {
+    opts = opts || {};
+    const list = (photos || []).map((p) => (typeof p === "string" ? { src: p, caption: "" } : p));
+    const slides = list.length
+      ? list.map((p) => `<figure class="slide"><img src="${esc(p.src)}" alt="${esc(p.caption || "")}" draggable="false" loading="lazy">${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ""}</figure>`).join("")
+      : PLACEHOLDER;
+    const multi = list.length > 1;
+    return `
       <div class="slider ${opts.contain ? "contain" : ""}" data-count="${list.length}" style="--ratio:${opts.ratio || "16 / 10"}">
         <div class="track">${slides}</div>
         ${multi ? `<button class="s-btn s-prev" type="button" aria-label="Foto sebelumnya">‹</button><button class="s-btn s-next" type="button" aria-label="Foto berikutnya">›</button>
         <div class="dots">${list.map((_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div>
         <span class="count">1/${list.length}</span>` : ""}
       </div>`;
-    }
+  }
 
-    function portBar(label, n) {
-        let ports = "";
-        for (let i = 0; i < 8; i++) ports += `<i class="${(n >> (i % 4)) & 1 && i < 5 ? "on" : ""}"></i>`;
-        return `<div class="card-bar"><span>${esc(label)}</span><span class="ports">${ports}</span></div>`;
-    }
+  function portBar(label, n) {
+    let ports = "";
+    for (let i = 0; i < 8; i++) ports += `<i class="${(n >> (i % 4)) & 1 && i < 5 ? "on" : ""}"></i>`;
+    return `<div class="card-bar"><span>${esc(label)}</span><span class="ports">${ports}</span></div>`;
+  }
 
-    /* ---------- Hero & name tag ---------- */
-    document.title = `${P.name} | Portofolio`;
-    $("brand-name").textContent = (P.short || P.name || "").toLowerCase();
-    $("hero-name").innerHTML = `${esc(P.firstLine || "")}<span>${esc(P.secondLine || "")}</span>`;
-    $("hero-role").textContent = P.role || "";
-    $("hero-tagline").textContent = P.tagline || "";
+  /* ---------- Hero & name tag ---------- */
+  document.title = `${P.name} | Portofolio`;
+  $("brand-name").textContent = (P.short || P.name || "").toLowerCase();
+  $("hero-name").innerHTML = `${esc(P.firstLine || "")}<span>${esc(P.secondLine || "")}</span>`;
+  $("hero-role").textContent = P.role || "";
+  $("hero-tagline").textContent = P.tagline || "";
 
-    const T = P.tag || {};
-    $("tag-head").textContent = T.header || "";
-    $("tag-name").textContent = P.short || "";
-    $("tag-role").textContent = T.role || "";
-    $("tag-sub").textContent = T.sub || "";
-    $("tag-id").textContent = T.id || "";
-    $("tag-initials").textContent = initials(P.name);
-    const tagImg = $("tag-img");
-    tagImg.src = P.photo || "";
-    tagImg.addEventListener("error", () => tagImg.remove());
+  const T = P.tag || {};
+  $("tag-head").textContent = T.header || "";
+  $("tag-name").textContent = P.name || "";
+  $("tag-role").textContent = T.role || "";
+  $("tag-sub").textContent = T.sub || "";
+  $("tag-id").textContent = T.id || "";
+  $("tag-initials").textContent = initials(P.name);
+  const tagImg = $("tag-img");
+  tagImg.src = T.photo || P.photo || "";
+  tagImg.addEventListener("error", () => tagImg.remove());
+  tagImg.addEventListener("load", () => $("tag-initials").remove());
 
-    /* ---------- Tentang + foto hover ---------- */
-    $("about-text").innerHTML = (P.about || []).map((t) => `<p>${esc(t)}</p>`).join("");
-    const portrait = $("portrait"), pBase = $("p-base"), pAlt = $("p-alt");
-    $("p-fallback").textContent = initials(P.name);
-    pBase.src = P.photo || "";
-    pAlt.src = P.photoAlt || "";
-    portrait.classList.add("no-alt"); // diganti saat foto alternatif berhasil dimuat
-    pAlt.addEventListener("load", () => { portrait.classList.remove("no-alt"); portrait.classList.add("has-alt"); });
-    pBase.addEventListener("error", () => portrait.classList.add("no-base"));
-    pAlt.addEventListener("error", () => { portrait.classList.add("no-alt"); portrait.classList.remove("has-alt"); pAlt.style.display = "none"; });
-    portrait.addEventListener("pointerenter", () => portrait.classList.add("alt"));
-    portrait.addEventListener("pointerleave", () => portrait.classList.remove("alt"));
-    portrait.addEventListener("focus", () => portrait.classList.add("alt"));
-    portrait.addEventListener("blur", () => portrait.classList.remove("alt"));
-    portrait.addEventListener("click", () => portrait.classList.toggle("alt")); // untuk layar sentuh
+  /* ---------- Tentang + foto hover ---------- */
+  $("about-text").innerHTML = (P.about || []).map((t) => `<p>${esc(t)}</p>`).join("");
+  const portrait = $("portrait"), pBase = $("p-base"), pAlt = $("p-alt");
+  $("p-fallback").textContent = initials(P.name);
+  pBase.src = P.photo || "";
+  pAlt.src = P.photoAlt || "";
+  portrait.classList.add("no-alt"); // diganti saat foto alternatif berhasil dimuat
+  pAlt.addEventListener("load", () => { portrait.classList.remove("no-alt"); portrait.classList.add("has-alt"); });
+  pBase.addEventListener("error", () => portrait.classList.add("no-base"));
+  pAlt.addEventListener("error", () => { portrait.classList.add("no-alt"); portrait.classList.remove("has-alt"); pAlt.style.display = "none"; });
+  portrait.addEventListener("pointerenter", () => portrait.classList.add("alt"));
+  portrait.addEventListener("pointerleave", () => portrait.classList.remove("alt"));
+  portrait.addEventListener("focus", () => portrait.classList.add("alt"));
+  portrait.addEventListener("blur", () => portrait.classList.remove("alt"));
+  portrait.addEventListener("click", () => portrait.classList.toggle("alt")); // untuk layar sentuh
 
-    /* ---------- Skill ---------- */
-    $("skill-grid").innerHTML = (D.skills || []).map((s, i) => `
+  /* ---------- Skill ---------- */
+  $("skill-grid").innerHTML = (D.skills || []).map((s, i) => `
     <article class="card reveal" ${delay(i)}>
       ${portBar("SKILL-" + String(i + 1).padStart(2, "0"), i + 3)}
       ${slider(s.photos)}
@@ -85,8 +86,8 @@
       </div>
     </article>`).join("");
 
-    /* ---------- Pengalaman ---------- */
-    $("exp-list").innerHTML = (D.experiences || []).map((x, i) => `
+  /* ---------- Pengalaman ---------- */
+  $("exp-list").innerHTML = (D.experiences || []).map((x, i) => `
     <article class="unit exp reveal" ${delay(i)}>
       ${slider(x.photos, { ratio: "4 / 3" })}
       <div>
@@ -97,8 +98,8 @@
       </div>
     </article>`).join("");
 
-    /* ---------- Project ---------- */
-    $("project-grid").innerHTML = (D.projects || []).map((p, i) => `
+  /* ---------- Project ---------- */
+  $("project-grid").innerHTML = (D.projects || []).map((p, i) => `
     <article class="card reveal" ${delay(i)}>
       ${portBar(String(p.type || "PROJECT").toUpperCase(), i + 6)}
       ${slider(p.photos)}
@@ -113,8 +114,8 @@
       </div>
     </article>`).join("");
 
-    /* ---------- Sertifikat ---------- */
-    $("cert-grid").innerHTML = (D.certificates || []).map((c, i) => `
+  /* ---------- Sertifikat ---------- */
+  $("cert-grid").innerHTML = (D.certificates || []).map((c, i) => `
     <article class="card cert reveal" ${delay(i)}>
       ${slider(c.photos, { ratio: "4 / 3", contain: true })}
       <div class="card-body">
@@ -123,94 +124,94 @@
       </div>
     </article>`).join("");
 
-    /* ---------- Kontak ---------- */
-    const L = P.links || {};
-    const jacks = [
-        L.email && { t: "Email", s: L.email, href: `mailto:${L.email}`, c: "#5aa9ff" },
-        L.github && { t: "GitHub", s: L.github.replace(/^https?:\/\//, ""), href: L.github, c: "#ffc94d" },
-        L.linkedin && { t: "LinkedIn", s: L.linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: L.linkedin, c: "#62e58f" },
-        L.youtube && { t: "YouTube", s: L.youtube.replace(/^https?:\/\/(www\.)?/, ""), href: L.youtube, c: "#ff6b6b" },
-        L.whatsapp && { t: "WhatsApp", s: "Kirim pesan", href: `https://wa.me/${L.whatsapp}`, c: "#f2ecd8" }
-    ].filter(Boolean);
-    $("contact-grid").innerHTML = jacks.map((j) => `
+  /* ---------- Kontak ---------- */
+  const L = P.links || {};
+  const jacks = [
+    L.email && { t: "Email", s: L.email, href: `mailto:${L.email}`, c: "#5aa9ff" },
+    L.github && { t: "GitHub", s: L.github.replace(/^https?:\/\//, ""), href: L.github, c: "#ffc94d" },
+    L.linkedin && { t: "LinkedIn", s: L.linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: L.linkedin, c: "#62e58f" },
+    L.youtube && { t: "YouTube", s: L.youtube.replace(/^https?:\/\/(www\.)?/, ""), href: L.youtube, c: "#ff6b6b" },
+    L.whatsapp && { t: "WhatsApp", s: "Kirim pesan", href: `https://wa.me/${L.whatsapp}`, c: "#f2ecd8" }
+  ].filter(Boolean);
+  $("contact-grid").innerHTML = jacks.map((j) => `
     <a class="jack" href="${esc(j.href)}" ${j.href.indexOf("http") === 0 ? 'target="_blank" rel="noopener"' : ""} style="--c:${j.c}">
       <span class="jack-cable"></span><span class="jack-plug"></span>
       <span class="jack-text"><b>${esc(j.t)}</b><small>${esc(j.s)}</small></span>
     </a>`).join("");
 
-    $("footer-text").textContent = `© ${new Date().getFullYear()} ${P.name} · dibuat dengan HTML, CSS, JavaScript & Three.js`;
+  $("footer-text").textContent = `© ${new Date().getFullYear()} ${P.name} · dibuat dengan HTML, CSS, JavaScript & Three.js`;
 
-    /* ---------- Foto yang gagal dimuat -> layar NO SIGNAL ---------- */
-    document.addEventListener("error", (e) => {
-        const img = e.target;
-        if (!img || img.tagName !== "IMG") return;
-        const fig = img.closest(".slide");
-        if (!fig) return;
-        fig.className = "slide nosignal";
-        fig.innerHTML = '<div class="bars"></div><b>NO SIGNAL</b><small>foto tidak ditemukan</small>';
-    }, true);
+  /* ---------- Foto yang gagal dimuat -> layar NO SIGNAL ---------- */
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== "IMG") return;
+    const fig = img.closest(".slide");
+    if (!fig) return;
+    fig.className = "slide nosignal";
+    fig.innerHTML = '<div class="bars"></div><b>NO SIGNAL</b><small>foto tidak ditemukan</small>';
+  }, true);
 
-    /* ---------- Perilaku slider: geser dengan mouse/sentuh, panah, titik ---------- */
-    const lb = $("lightbox"), lbImg = $("lb-img"), lbCap = $("lb-cap");
-    let lbList = [], lbIdx = 0;
-    function showLb() { const it = lbList[lbIdx]; lbImg.src = it.src; lbImg.alt = it.cap; lbCap.textContent = it.cap; }
-    function openLb(list, i) { lbList = list; lbIdx = i; showLb(); lb.hidden = false; document.body.style.overflow = "hidden"; }
-    function closeLb() { lb.hidden = true; document.body.style.overflow = ""; }
-    function stepLb(d) { lbIdx = (lbIdx + d + lbList.length) % lbList.length; showLb(); }
-    lb.querySelector(".lb-close").addEventListener("click", closeLb);
-    lb.querySelector(".lb-prev").addEventListener("click", () => stepLb(-1));
-    lb.querySelector(".lb-next").addEventListener("click", () => stepLb(1));
-    lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
-    document.addEventListener("keydown", (e) => {
-        if (lb.hidden) return;
-        if (e.key === "Escape") closeLb();
-        if (e.key === "ArrowLeft") stepLb(-1);
-        if (e.key === "ArrowRight") stepLb(1);
+  /* ---------- Perilaku slider: geser dengan mouse/sentuh, panah, titik ---------- */
+  const lb = $("lightbox"), lbImg = $("lb-img"), lbCap = $("lb-cap");
+  let lbList = [], lbIdx = 0;
+  function showLb() { const it = lbList[lbIdx]; lbImg.src = it.src; lbImg.alt = it.cap; lbCap.textContent = it.cap; }
+  function openLb(list, i) { lbList = list; lbIdx = i; showLb(); lb.hidden = false; document.body.style.overflow = "hidden"; }
+  function closeLb() { lb.hidden = true; document.body.style.overflow = ""; }
+  function stepLb(d) { lbIdx = (lbIdx + d + lbList.length) % lbList.length; showLb(); }
+  lb.querySelector(".lb-close").addEventListener("click", closeLb);
+  lb.querySelector(".lb-prev").addEventListener("click", () => stepLb(-1));
+  lb.querySelector(".lb-next").addEventListener("click", () => stepLb(1));
+  lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
+  document.addEventListener("keydown", (e) => {
+    if (lb.hidden) return;
+    if (e.key === "Escape") closeLb();
+    if (e.key === "ArrowLeft") stepLb(-1);
+    if (e.key === "ArrowRight") stepLb(1);
+  });
+
+  document.querySelectorAll(".slider").forEach((sl) => {
+    const track = sl.querySelector(".track");
+    const dots = [...sl.querySelectorAll(".dots i")];
+    const count = sl.querySelector(".count");
+    const n = +sl.dataset.count || 0;
+    const index = () => Math.round(track.scrollLeft / track.clientWidth);
+    const go = (i) => track.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * track.clientWidth, behavior: "smooth" });
+
+    track.addEventListener("scroll", () => {
+      const i = index();
+      dots.forEach((d, k) => d.classList.toggle("on", k === i));
+      if (count) count.textContent = `${i + 1}/${n}`;
+    }, { passive: true });
+
+    const prev = sl.querySelector(".s-prev"), next = sl.querySelector(".s-next");
+    if (prev) prev.addEventListener("click", () => go(index() - 1));
+    if (next) next.addEventListener("click", () => go(index() + 1));
+
+    // Geser dengan mouse (sentuh sudah ditangani scroll bawaan)
+    let down = false, sx = 0, sl0 = 0, moved = 0;
+    track.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "mouse" || e.button !== 0) return;
+      down = true; sx = e.clientX; sl0 = track.scrollLeft; moved = 0;
+      track.classList.add("drag");
     });
-
-    document.querySelectorAll(".slider").forEach((sl) => {
-        const track = sl.querySelector(".track");
-        const dots = [...sl.querySelectorAll(".dots i")];
-        const count = sl.querySelector(".count");
-        const n = +sl.dataset.count || 0;
-        const index = () => Math.round(track.scrollLeft / track.clientWidth);
-        const go = (i) => track.scrollTo({ left: Math.max(0, Math.min(n - 1, i)) * track.clientWidth, behavior: "smooth" });
-
-        track.addEventListener("scroll", () => {
-            const i = index();
-            dots.forEach((d, k) => d.classList.toggle("on", k === i));
-            if (count) count.textContent = `${i + 1}/${n}`;
-        }, { passive: true });
-
-        const prev = sl.querySelector(".s-prev"), next = sl.querySelector(".s-next");
-        if (prev) prev.addEventListener("click", () => go(index() - 1));
-        if (next) next.addEventListener("click", () => go(index() + 1));
-
-        // Geser dengan mouse (sentuh sudah ditangani scroll bawaan)
-        let down = false, sx = 0, sl0 = 0, moved = 0;
-        track.addEventListener("pointerdown", (e) => {
-            if (e.pointerType !== "mouse" || e.button !== 0) return;
-            down = true; sx = e.clientX; sl0 = track.scrollLeft; moved = 0;
-            track.classList.add("drag");
-        });
-        window.addEventListener("pointermove", (e) => {
-            if (!down) return;
-            const dx = e.clientX - sx;
-            moved = Math.max(moved, Math.abs(dx));
-            track.scrollLeft = sl0 - dx;
-        });
-        window.addEventListener("pointerup", () => {
-            if (!down) return;
-            down = false;
-            track.classList.remove("drag");
-            go(index());
-        });
-        track.addEventListener("click", () => {
-            if (moved > 5) { moved = 0; return; }
-            const imgs = [...track.querySelectorAll("img")];
-            if (!imgs.length) return;
-            openLb(imgs.map((im) => ({ src: im.src, cap: im.alt })), Math.min(index(), imgs.length - 1));
-        });
-        track.addEventListener("dragstart", (e) => e.preventDefault());
+    window.addEventListener("pointermove", (e) => {
+      if (!down) return;
+      const dx = e.clientX - sx;
+      moved = Math.max(moved, Math.abs(dx));
+      track.scrollLeft = sl0 - dx;
     });
+    window.addEventListener("pointerup", () => {
+      if (!down) return;
+      down = false;
+      track.classList.remove("drag");
+      go(index());
+    });
+    track.addEventListener("click", () => {
+      if (moved > 5) { moved = 0; return; }
+      const imgs = [...track.querySelectorAll("img")];
+      if (!imgs.length) return;
+      openLb(imgs.map((im) => ({ src: im.src, cap: im.alt })), Math.min(index(), imgs.length - 1));
+    });
+    track.addEventListener("dragstart", (e) => e.preventDefault());
+  });
 })();

@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    STYLE — tema ruang server.
    Warna: baja kebiruan sedang, oranye keselamatan, lampu LED.
    Panel berbentuk faceplate rack (bukan kartu kaca).
@@ -235,7 +235,7 @@ main,
 }
 
 .hero-text {
-    max-width: 560px;
+    max-width: 640px;
     pointer-events: auto;
 }
 
@@ -257,7 +257,7 @@ main,
     font-weight: 700;
     text-transform: uppercase;
     line-height: .86;
-    font-size: clamp(76px, 12vw, 168px);
+    font-size: clamp(44px, 7.6vw, 108px);
     letter-spacing: -.01em;
     text-shadow: 0 3px 0 rgba(20, 28, 40, .55);
 }
@@ -270,6 +270,8 @@ main,
 .hero-role {
     margin-top: 20px;
     display: inline-block;
+    max-width: 100%;
+    line-height: 1.5;
     padding: 6px 14px;
     background: var(--label);
     color: var(--label-ink);
@@ -320,34 +322,14 @@ main,
     box-shadow: 0 2px 0 #a9551a;
 }
 
-.hint {
-    font-family: var(--font-mono);
-    font-size: 12px;
-    color: var(--muted);
-    background: rgba(33, 42, 54, .85);
-    padding: 6px 10px;
-}
-
-.hint-arrow {
-    color: var(--accent);
-    display: inline-block;
-    animation: nudge 1.6s ease-in-out infinite;
-}
-
-@keyframes nudge {
-    50% {
-        transform: translateX(6px);
-    }
-}
-
-/* ---------- Name tag + lanyard ---------- */
+/* ---------- Name tag + lanyard (holder plastik + kartu ID) ---------- */
 .lanyard {
     position: absolute;
     top: 0;
     right: 0;
     width: min(52%, 620px);
     height: 100%;
-    min-height: 640px;
+    min-height: 680px;
     z-index: 3;
     pointer-events: none;
 }
@@ -363,19 +345,14 @@ main,
     position: absolute;
     left: 0;
     top: 0;
-    width: 230px;
-    height: 340px;
+    width: 196px;
+    height: 392px;
     transform-origin: 50% 0;
     pointer-events: auto;
     cursor: grab;
     touch-action: none;
     user-select: none;
     -webkit-user-select: none;
-    background: #f4f1e8;
-    border-radius: 12px;
-    color: #1d232b;
-    overflow: visible;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, .4), inset 0 0 0 1px rgba(0, 0, 0, .12);
     will-change: transform;
 }
 
@@ -383,62 +360,158 @@ main,
     cursor: grabbing;
 }
 
-.tag-clip {
+.tag-ring {
     position: absolute;
     left: 50%;
-    top: -22px;
-    width: 28px;
-    height: 40px;
-    margin-left: -14px;
-    border-radius: 6px 6px 3px 3px;
-    background: linear-gradient(90deg, #8b97a4, #dfe6ec 45%, #7c8895);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, .4);
+    top: -8px;
+    width: 26px;
+    height: 26px;
+    margin-left: -13px;
+    border-radius: 50%;
+    border: 3px solid #b4bcc6;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+    z-index: 3;
 }
 
-.tag-clip::after {
+.tag-swivel {
+    position: absolute;
+    left: 50%;
+    top: 14px;
+    width: 12px;
+    height: 22px;
+    margin-left: -6px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #8a95a1, #e6ebf0 50%, #7a8590);
+    z-index: 3;
+}
+
+.tag-hook {
+    position: absolute;
+    left: 50%;
+    top: 32px;
+    width: 24px;
+    height: 46px;
+    margin-left: -12px;
+    border: 4px solid #aab3bd;
+    border-radius: 12px 12px 14px 14px;
+    border-top-width: 5px;
+    box-shadow: 0 2px 3px rgba(0, 0, 0, .35);
+    z-index: 3;
+}
+
+.tag-hook::after {
     content: "";
     position: absolute;
-    left: 50%;
-    bottom: 6px;
-    width: 10px;
-    height: 10px;
-    margin-left: -5px;
-    border-radius: 50%;
-    background: #4b5662;
+    left: -6px;
+    bottom: 10px;
+    width: 8px;
+    height: 12px;
+    background: #aab3bd;
+    border-radius: 3px;
 }
 
-.tag-hole {
+.tag-holder {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 40px;
+    bottom: 0;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, .94);
+    border: 1px solid #cfd5dc;
+    box-shadow: 0 14px 26px rgba(0, 0, 0, .4), inset 0 0 0 5px rgba(255, 255, 255, .6);
+}
+
+.tag-slot {
     position: absolute;
     left: 50%;
-    top: 20px;
-    width: 56px;
-    height: 10px;
-    margin-left: -28px;
-    border-radius: 6px;
-    background: #c7c2b4;
-    box-shadow: inset 0 2px 3px rgba(0, 0, 0, .35);
+    top: 9px;
+    width: 54px;
+    height: 9px;
+    margin-left: -27px;
+    border-radius: 5px;
+    background: #cdd3da;
+    box-shadow: inset 0 2px 3px rgba(0, 0, 0, .3);
+}
+
+.tag-card {
+    position: absolute;
+    left: 9px;
+    right: 9px;
+    top: 26px;
+    bottom: 10px;
+    overflow: hidden;
+    background: #fbfbfe;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 54px 10px 0;
+    color: #1d2b22;
+}
+
+.geo {
+    position: absolute;
+    display: block;
+    transform: rotate(45deg);
+}
+
+.g1 {
+    top: -34px;
+    right: -26px;
+    width: 78px;
+    height: 78px;
+    background: #7c4fb8;
+}
+
+.g2 {
+    top: 18px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    background: #c9a3e6;
+}
+
+.g3 {
+    bottom: -44px;
+    left: -30px;
+    width: 92px;
+    height: 92px;
+    background: #6a3fa8;
+}
+
+.g4 {
+    bottom: 20px;
+    left: 14px;
+    width: 22px;
+    height: 22px;
+    background: #cfaee9;
 }
 
 .tag-head {
-    margin-top: 38px;
-    padding: 7px 0;
-    text-align: center;
-    background: var(--accent);
-    color: var(--accent-ink);
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    max-width: 98px;
     font-family: var(--font-mono);
-    font-size: 11px;
+    font-size: 9.5px;
     font-weight: 500;
-    letter-spacing: .12em;
+    line-height: 1.25;
+    letter-spacing: .04em;
+    color: #1f7a3d;
+    text-transform: uppercase;
 }
 
 .tag-photo {
     position: relative;
-    width: 118px;
-    height: 118px;
-    margin: 14px auto 0;
-    border: 3px solid #1d232b;
-    background: #cfd6de;
+    flex: none;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 3px solid #7c4fb8;
+    background: #d7dde5;
     overflow: hidden;
+    z-index: 1;
 }
 
 .tag-photo img {
@@ -454,59 +527,58 @@ main,
     place-items: center;
     font-family: var(--font-head);
     font-weight: 700;
-    font-size: 56px;
+    font-size: 38px;
     color: #4a5a6e;
 }
 
 .tag-name {
-    margin-top: 10px;
+    margin-top: 12px;
     text-align: center;
-    font-family: var(--font-head);
-    font-weight: 700;
-    font-size: 34px;
-    line-height: 1;
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 13.5px;
+    line-height: 1.2;
     text-transform: uppercase;
-    letter-spacing: .02em;
+    color: #1f6d3a;
+    z-index: 1;
+}
+
+.tag-id {
+    margin-top: 5px;
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    z-index: 1;
+}
+
+.tag-id:empty {
+    display: none;
 }
 
 .tag-role {
-    text-align: center;
-    margin-top: 4px;
+    margin-top: 7px;
+    padding: 2px 16px;
+    border-radius: 999px;
+    background: #1f7a3d;
+    color: #fff;
     font-family: var(--font-mono);
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
-    letter-spacing: .1em;
-    color: #b9531a;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    z-index: 1;
+}
+
+.tag-role:empty {
+    display: none;
 }
 
 .tag-sub {
+    margin-top: 8px;
     text-align: center;
-    font-size: 12.5px;
-    color: #4b5663;
-    margin-top: 2px;
-}
-
-.tag-foot {
-    position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.barcode {
-    flex: 1;
-    height: 22px;
-    background: repeating-linear-gradient(90deg, #1d232b 0 2px, transparent 2px 4px, #1d232b 4px 5px, transparent 5px 8px, #1d232b 8px 11px, transparent 11px 13px);
-}
-
-.tag-foot b {
-    font-family: var(--font-mono);
-    font-size: 11px;
-    font-weight: 500;
+    font-size: 10.5px;
+    color: #55606c;
+    z-index: 1;
 }
 
 /* ---------- Section & label plate ---------- */
@@ -618,21 +690,18 @@ main,
     width: calc(100% - 24px);
     height: calc(100% - 24px);
     object-fit: cover;
-    transition: opacity .35s ease, transform .5s ease;
+    transition: opacity 1.1s ease, transform 1.4s ease;
 }
 
 .portrait .p-alt {
     opacity: 0;
-    transform: scale(1.04);
+    transform: scale(1.05);
+    z-index: 1;
 }
 
 .portrait.alt .p-alt {
     opacity: 1;
     transform: none;
-}
-
-.portrait.alt.has-alt .p-base {
-    opacity: 0;
 }
 
 .p-tint {
@@ -642,7 +711,7 @@ main,
     pointer-events: none;
     mix-blend-mode: multiply;
     background: linear-gradient(155deg, #d62a30 0 52%, #1f4fb8 52% 100%);
-    transition: opacity .35s;
+    transition: opacity 1.1s ease;
 }
 
 .portrait.alt.no-alt .p-tint {
@@ -1223,6 +1292,11 @@ html[data-motion="reduce"] *::after {
 html[data-motion="reduce"] .reveal {
     opacity: 1;
     transform: none;
+}
+
+html[data-motion="reduce"] .portrait img,
+html[data-motion="reduce"] .p-tint {
+    transition-duration: 1.1s !important;
 }
 
 html[data-motion="reduce"] .plate.reveal {

@@ -3,6 +3,7 @@
    photos : daftar foto (bisa lebih dari satu, nanti bisa digeser)
             contoh: ["assets/skills/mikrotik/1.jpg", "assets/skills/mikrotik/2.jpg"]
             boleh kosong [] (tampil layar "NO SIGNAL")
+   PENTING: path foto ditulis tanpa spasi, contoh "assets/skills/hardware/1.jpg"
    ============================================================ */
 window.DATA = window.DATA || {};
 
@@ -11,7 +12,13 @@ window.DATA.skills = [
         title: "MikroTik",
         note: "Konfigurasi router dan manajemen jaringan lewat Winbox.",
         tags: ["RouterOS", "Winbox", "MTCNA"],
-        photos: []
+        photos: [
+            "assets/profile/mikrotik1.jpeg",
+            "assets/profile/mikrotik2.jpeg",
+            "assets/profile/mikrotik3.jpeg",
+            "assets/profile/mikrotik4.jpeg",
+            "assets/profile/mikrotik5.jpeg"
+        ]
     },
     {
         title: "Cisco & Simulasi",

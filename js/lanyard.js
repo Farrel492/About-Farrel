@@ -1,4 +1,4 @@
-/* ============================================================
+﻿/* ============================================================
    LANYARD — name tag yang menggantung dan bisa ditarik,
    digeser kiri-kanan, atau dilempar (fisika tali sederhana).
    ============================================================ */
@@ -15,7 +15,7 @@
 
     const N = 8;              // jumlah segmen tali
     const SEG = 34;           // panjang tiap segmen (px)
-    const CARD_W = 230, CARD_LEN = 310;
+    const CARD_W = 196, CARD_LEN = 330;
     const GRAV = 0.55, DAMP = 0.992, ITER = 12;
 
     let W = 0, H = 0, dpr = 1;
@@ -88,21 +88,55 @@
         ctx.fillStyle = "#8e99a6";
         ctx.fillRect(pts[0].x - 26, -30, 52, 22);
 
-        // tali
-        ctx.lineCap = "round"; ctx.lineJoin = "round";
-        function strapPath() {
-            ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            for (let i = 1; i < N; i++) {
-                const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
-                ctx.quadraticCurveTo(pts[i].x, pts[i].y, mx, my);
+        // titik-titik rapat sepanjang tali (kurva halus)
+        const S = [{ x: pts[0].x, y: pts[0].y }];
+        let cx = pts[0].x, cy = pts[0].y;
+        for (let i = 1; i < N; i++) {
+            const mx = (pts[i].x + pts[i + 1].x) / 2, my = (pts[i].y + pts[i + 1].y) / 2;
+            for (let k = 1; k <= 6; k++) {
+                const t = k / 6, u = 1 - t;
+                S.push({ x: u * u * cx + 2 * u * t * pts[i].x + t * t * mx, y: u * u * cy + 2 * u * t * pts[i].y + t * t * my });
             }
-            ctx.lineTo(pts[N].x, pts[N].y);
+            cx = mx; cy = my;
         }
-        strapPath(); ctx.strokeStyle = "rgba(0,0,0,.28)"; ctx.lineWidth = 20; ctx.translate(3, 4); ctx.stroke(); ctx.translate(-3, -4);
-        strapPath(); ctx.strokeStyle = "#ff8f3d"; ctx.lineWidth = 18; ctx.stroke();
-        strapPath(); ctx.strokeStyle = "#e2742a"; ctx.lineWidth = 2; ctx.setLineDash([7, 7]); ctx.stroke(); ctx.setLineDash([]);
-        strapPath(); ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = 3; ctx.translate(-5, 0); ctx.stroke(); ctx.translate(5, 0);
+        for (let k = 1; k <= 5; k++) { const t = k / 5; S.push({ x: cx + (pts[N].x - cx) * t, y: cy + (pts[N].y - cy) * t }); }
+
+        ctx.lineCap = "butt"; ctx.lineJoin = "round";
+        function strap() { ctx.beginPath(); ctx.moveTo(S[0].x, S[0].y); for (let i = 1; i < S.length; i++) ctx.lineTo(S[i].x, S[i].y); }
+        strap(); ctx.strokeStyle = "rgba(0,0,0,.3)"; ctx.lineWidth = 26; ctx.translate(3, 4); ctx.stroke(); ctx.translate(-3, -4);
+        strap(); ctx.strokeStyle = "#14562b"; ctx.lineWidth = 26; ctx.stroke();
+        strap(); ctx.strokeStyle = "#1f7a3d"; ctx.lineWidth = 22; ctx.stroke();
+
+        // motif belah ketupat biru & hijau muda di sepanjang tali
+        let acc = 0, n = 0, mark = null;
+        const total = S.reduce((t, p, i) => (i ? t + Math.hypot(p.x - S[i - 1].x, p.y - S[i - 1].y) : 0), 0);
+        for (let i = 1; i < S.length; i++) {
+            const dx = S[i].x - S[i - 1].x, dy = S[i].y - S[i - 1].y, d = Math.hypot(dx, dy);
+            acc += d;
+            if (acc >= 20) {
+                acc = 0; n++;
+                ctx.save();
+                ctx.translate(S[i].x, S[i].y);
+                ctx.rotate(Math.atan2(dy, dx));
+                ctx.fillStyle = n % 2 ? "#2f5fb8" : "#b9c93a";
+                ctx.rotate(Math.PI / 4);
+                ctx.fillRect(-4.5, -4.5, 9, 9);
+                ctx.restore();
+            }
+            if (!mark && i > 1) { let L = 0; for (let k = 1; k <= i; k++) L += Math.hypot(S[k].x - S[k - 1].x, S[k].y - S[k - 1].y); if (L > total * 0.34) mark = { x: S[i].x, y: S[i].y, a: Math.atan2(dy, dx) }; }
+        }
+
+        // pengait hitam (breakaway) + paku logam di tengah tali
+        if (mark) {
+            ctx.save();
+            ctx.translate(mark.x, mark.y);
+            ctx.rotate(mark.a);
+            ctx.fillStyle = "#15181c";
+            ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-9, -15, 38, 30, 6) : ctx.rect(-9, -15, 38, 30); ctx.fill();
+            ctx.fillStyle = "#2a2f36"; ctx.fillRect(-4, -9, 28, 18);
+            ctx.fillStyle = "#c3cad2"; ctx.beginPath(); ctx.arc(-24, 0, 5, 0, 7); ctx.fill();
+            ctx.restore();
+        }
 
         // posisi & sudut name tag
         const A = pts[N];
