@@ -7,7 +7,8 @@
   "use strict";
   const D = window.DATA || {};
   const P = D.profile || {};
-  const $ = (id) => document.getElementById(id);
+  // Jika elemen tidak ditemukan, kembalikan elemen kosong agar tidak error
+  const $ = (id) => document.getElementById(id) || document.createElement("div");
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const initials = (n) => (n || "?").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
@@ -52,11 +53,12 @@
   $("tag-role").textContent = T.role || "";
   $("tag-sub").textContent = T.sub || "";
   $("tag-id").textContent = T.id || "";
-  $("tag-initials").textContent = initials(P.name);
+  const tagInitials = $("tag-initials");
+  tagInitials.textContent = initials(P.name);
   const tagImg = $("tag-img");
   tagImg.src = T.photo || P.photo || "";
   tagImg.addEventListener("error", () => tagImg.remove());
-  tagImg.addEventListener("load", () => $("tag-initials").remove());
+  tagImg.addEventListener("load", () => tagInitials.remove()); // foto berhasil dimuat: hapus inisial
 
   /* ---------- Tentang + foto hover ---------- */
   $("about-text").innerHTML = (P.about || []).map((t) => `<p>${esc(t)}</p>`).join("");
@@ -68,11 +70,33 @@
   pAlt.addEventListener("load", () => { portrait.classList.remove("no-alt"); portrait.classList.add("has-alt"); });
   pBase.addEventListener("error", () => portrait.classList.add("no-base"));
   pAlt.addEventListener("error", () => { portrait.classList.add("no-alt"); portrait.classList.remove("has-alt"); pAlt.style.display = "none"; });
-  portrait.addEventListener("pointerenter", () => portrait.classList.add("alt"));
-  portrait.addEventListener("pointerleave", () => portrait.classList.remove("alt"));
-  portrait.addEventListener("focus", () => portrait.classList.add("alt"));
-  portrait.addEventListener("blur", () => portrait.classList.remove("alt"));
-  portrait.addEventListener("click", () => portrait.classList.toggle("alt")); // untuk layar sentuh
+  // Efek radius: foto Spiderman muncul perlahan di sekitar kursor, lalu mengikuti kursor
+  const reveal = { x: 0.5, y: 0.4, r: 0, tx: 0.5, ty: 0.4, tr: 0, raf: 0 };
+  const baseR = () => Math.max(130, portrait.clientWidth * 0.42);
+  function paint() {
+    reveal.raf = 0;
+    reveal.x += (reveal.tx - reveal.x) * 0.12;
+    reveal.y += (reveal.ty - reveal.y) * 0.12;
+    reveal.r += (reveal.tr - reveal.r) * 0.045;   // pelan: membesar / mengecil
+    const w = portrait.clientWidth, h = portrait.clientHeight;
+    portrait.style.setProperty("--mx", (reveal.x * w - 12).toFixed(1) + "px");
+    portrait.style.setProperty("--my", (reveal.y * h - 12).toFixed(1) + "px");
+    portrait.style.setProperty("--r", Math.max(1, reveal.r).toFixed(1) + "px");
+    const moving = Math.abs(reveal.tx - reveal.x) > 0.002 || Math.abs(reveal.ty - reveal.y) > 0.002 || Math.abs(reveal.tr - reveal.r) > 0.5;
+    if (moving) reveal.raf = requestAnimationFrame(paint);
+  }
+  const kick = () => { if (!reveal.raf) reveal.raf = requestAnimationFrame(paint); };
+  function aim(e) {
+    const rc = portrait.getBoundingClientRect();
+    reveal.tx = (e.clientX - rc.left) / rc.width;
+    reveal.ty = (e.clientY - rc.top) / rc.height;
+  }
+  portrait.addEventListener("pointerenter", (e) => { aim(e); reveal.x = reveal.tx; reveal.y = reveal.ty; reveal.tr = baseR(); kick(); });
+  portrait.addEventListener("pointermove", (e) => { aim(e); reveal.tr = baseR(); kick(); });
+  portrait.addEventListener("pointerleave", () => { reveal.tr = 0; kick(); });
+  portrait.addEventListener("pointercancel", () => { reveal.tr = 0; kick(); });
+  portrait.addEventListener("focus", () => { reveal.tx = 0.5; reveal.ty = 0.4; reveal.tr = Math.hypot(portrait.clientWidth, portrait.clientHeight); kick(); });
+  portrait.addEventListener("blur", () => { reveal.tr = 0; kick(); });
 
   /* ---------- Skill ---------- */
   $("skill-grid").innerHTML = (D.skills || []).map((s, i) => `
@@ -158,9 +182,10 @@
   function openLb(list, i) { lbList = list; lbIdx = i; showLb(); lb.hidden = false; document.body.style.overflow = "hidden"; }
   function closeLb() { lb.hidden = true; document.body.style.overflow = ""; }
   function stepLb(d) { lbIdx = (lbIdx + d + lbList.length) % lbList.length; showLb(); }
-  lb.querySelector(".lb-close").addEventListener("click", closeLb);
-  lb.querySelector(".lb-prev").addEventListener("click", () => stepLb(-1));
-  lb.querySelector(".lb-next").addEventListener("click", () => stepLb(1));
+  const lbClose = lb.querySelector(".lb-close"), lbPrev = lb.querySelector(".lb-prev"), lbNext = lb.querySelector(".lb-next");
+  if (lbClose) lbClose.addEventListener("click", closeLb);
+  if (lbPrev) lbPrev.addEventListener("click", () => stepLb(-1));
+  if (lbNext) lbNext.addEventListener("click", () => stepLb(1));
   lb.addEventListener("click", (e) => { if (e.target === lb) closeLb(); });
   document.addEventListener("keydown", (e) => {
     if (lb.hidden) return;
