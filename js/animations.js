@@ -1,117 +1,139 @@
 /* ============================================================
-   ANIMASI UI — tombol kurangi animasi, navigasi, reveal saat scroll,
+   ANIMASI UI — tombol kurangi animasi, navigasi, efek explode-view saat scroll,
    dan kabel LAN yang menjalar di sisi kiri halaman.
    ============================================================ */
 (function () {
-    "use strict";
-    const root = document.documentElement;
-    const $ = (id) => document.getElementById(id);
-    const store = {
-        get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
-        set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* diabaikan */ } }
-    };
+  "use strict";
+  const root = document.documentElement;
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch (e) { /* diabaikan */ } }
+  };
 
-    /* ---------- Pengaturan gerak ---------- */
-    const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const motionBtn = $("motion-toggle");
-    function setMotion(mode, persist) {
-        root.dataset.motion = mode;
-        motionBtn.setAttribute("aria-pressed", String(mode === "reduce"));
-        motionBtn.title = mode === "reduce" ? "Aktifkan animasi" : "Kurangi animasi";
-        if (persist) store.set("motion", mode);
-        window.dispatchEvent(new Event("motionchange"));
-    }
-    setMotion(store.get("motion") || (prefersReduce ? "reduce" : "full"), false);
-    motionBtn.addEventListener("click", () => setMotion(root.dataset.motion === "reduce" ? "full" : "reduce", true));
+  /* ---------- Pengaturan gerak ---------- */
+  const prefersReduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const motionBtn = $("motion-toggle");
+  function setMotion(mode, persist) {
+    root.dataset.motion = mode;
+    motionBtn.setAttribute("aria-pressed", String(mode === "reduce"));
+    motionBtn.title = mode === "reduce" ? "Enable animations" : "Reduce motion";
+    if (persist) store.set("motion", mode);
+    window.dispatchEvent(new Event("motionchange"));
+  }
+  setMotion(store.get("motion") || (prefersReduce ? "reduce" : "full"), false);
+  motionBtn.addEventListener("click", () => setMotion(root.dataset.motion === "reduce" ? "full" : "reduce", true));
 
-    /* ---------- Reveal saat scroll ---------- */
-    const els = document.querySelectorAll(".reveal");
-    if ("IntersectionObserver" in window) {
-        const io = new IntersectionObserver((entries) => {
-            entries.forEach((e) => { if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); } });
-        }, { threshold: 0.1, rootMargin: "0px 0px -5% 0px" });
-        els.forEach((el) => io.observe(el));
-    } else {
-        els.forEach((el) => el.classList.add("in"));
-    }
-
-    /* ---------- Navigasi ---------- */
-    const links = $("nav-links"), menuBtn = $("menu-btn");
-    const anchors = [...links.querySelectorAll("a")];
-    const sections = anchors.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
-    menuBtn.addEventListener("click", () => {
-        const open = links.classList.toggle("open");
-        menuBtn.setAttribute("aria-expanded", String(open));
+  /* ---------- Explode view: elemen berserakan, lalu menyatu saat di-scroll ---------- */
+  const xps = [...document.querySelectorAll(".xp")];
+  const rnd = (i, k) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const clamp = (v) => Math.max(0, Math.min(1, v));
+  let tops = [], lastP = [];
+  const docTop = (el) => { let y = 0; while (el) { y += el.offsetTop; el = el.offsetParent; } return y; };
+  function seedExplode() {
+    const m = window.innerWidth < 820 ? 0.28 : 1;
+    xps.forEach((el, i) => {
+      const side = rnd(i, 1) > 0.5 ? 1 : -1;
+      el.style.setProperty("--ox", (side * (120 + rnd(i, 2) * 260) * m).toFixed(0) + "px");
+      el.style.setProperty("--oy", (110 + rnd(i, 3) * 190).toFixed(0) + "px");
+      el.style.setProperty("--or", ((rnd(i, 4) * 2 - 1) * 15).toFixed(1) + "deg");
     });
-    links.addEventListener("click", (e) => {
-        if (e.target.tagName === "A") { links.classList.remove("open"); menuBtn.setAttribute("aria-expanded", "false"); }
+    tops = xps.map(docTop);
+    lastP = xps.map(() => -1);
+  }
+  function explode() {
+    const reduce = root.dataset.motion === "reduce";
+    const vh = window.innerHeight, sy = window.scrollY;
+    xps.forEach((el, i) => {
+      let p = 1;
+      if (!reduce) {
+        const lag = (i % 3) * 46;
+        const t = clamp((vh * 0.98 - (tops[i] - sy) - lag) / (vh * 0.5));
+        p = t * t * (3 - 2 * t);
+      }
+      if (Math.abs(p - lastP[i]) > 0.003) { lastP[i] = p; el.style.setProperty("--p", p.toFixed(3)); }
     });
+  }
+  window.addEventListener("motionchange", () => { lastP = xps.map(() => -1); explode(); });
 
-    /* ---------- Kabel LAN menjalar mengikuti scroll ---------- */
-    const lan = $("lan"), cable = $("lan-cable"), shadow = $("lan-shadow"), pulse = $("lan-pulse");
-    const plug = $("lan-plug"), clip = $("lan-clip-rect");
-    let total = 0, docH = 0;
+  /* ---------- Navigasi ---------- */
+  const links = $("nav-links"), menuBtn = $("menu-btn");
+  const anchors = [...links.querySelectorAll("a")];
+  const sections = anchors.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  menuBtn.addEventListener("click", () => {
+    const open = links.classList.toggle("open");
+    menuBtn.setAttribute("aria-expanded", String(open));
+  });
+  links.addEventListener("click", (e) => {
+    if (e.target.tagName === "A") { links.classList.remove("open"); menuBtn.setAttribute("aria-expanded", "false"); }
+  });
 
-    function buildCable() {
-        docH = document.documentElement.scrollHeight;
-        lan.setAttribute("height", docH);
-        lan.style.height = docH + "px";
-        const x = 34, step = 520;
-        let d = `M ${x} -20 L ${x} 60`;
-        let y = 60, dir = 1;
-        while (y < docH) {
-            const y2 = y + step;
-            d += ` C ${x + 26 * dir} ${y + step * 0.3}, ${x - 26 * dir} ${y + step * 0.7}, ${x} ${y2}`;
-            y = y2; dir *= -1;
-        }
-        [cable, shadow, pulse].forEach((p) => p.setAttribute("d", d));
-        total = cable.getTotalLength();
-        cable.style.strokeDasharray = total;
-        shadow.style.strokeDasharray = total;
+  /* ---------- Kabel LAN menjalar mengikuti scroll ---------- */
+  const lan = $("lan"), cable = $("lan-cable"), shadow = $("lan-shadow"), pulse = $("lan-pulse");
+  const plug = $("lan-plug"), clip = $("lan-clip-rect");
+  let total = 0, docH = 0;
+
+  function buildCable() {
+    docH = document.documentElement.scrollHeight;
+    lan.setAttribute("height", docH);
+    lan.style.height = docH + "px";
+    const x = 34, step = 520;
+    let d = `M ${x} -20 L ${x} 60`;
+    let y = 60, dir = 1;
+    while (y < docH) {
+      const y2 = y + step;
+      d += ` C ${x + 26 * dir} ${y + step * 0.3}, ${x - 26 * dir} ${y + step * 0.7}, ${x} ${y2}`;
+      y = y2; dir *= -1;
     }
+    [cable, shadow, pulse].forEach((p) => p.setAttribute("d", d));
+    total = cable.getTotalLength();
+    cable.style.strokeDasharray = total;
+    shadow.style.strokeDasharray = total;
+  }
 
-    let ticking = false;
-    function onScroll() {
-        ticking = false;
-        const nav = $("nav");
-        const sy = window.scrollY;
+  let ticking = false;
+  function onScroll() {
+    ticking = false;
+    const sy = window.scrollY;
+    explode();
 
-        // section aktif
-        let active = null;
-        sections.forEach((s) => { if (s.getBoundingClientRect().top <= window.innerHeight * 0.4) active = s; });
-        anchors.forEach((a) => a.classList.toggle("active", !!active && a.getAttribute("href") === "#" + active.id));
+    // section aktif
+    let active = null;
+    sections.forEach((s) => { if (s.getBoundingClientRect().top <= window.innerHeight * 0.4) active = s; });
+    anchors.forEach((a) => a.classList.toggle("active", !!active && a.getAttribute("href") === "#" + active.id));
 
-        // kabel: panjang tampak mengikuti posisi bawah layar
-        if (total && getComputedStyle(lan).display !== "none") {
-            const max = Math.max(1, docH - window.innerHeight);
-            const target = Math.min(1, (sy + window.innerHeight * 0.55) / (max + window.innerHeight * 0.55));
-            const shown = total * target;
-            cable.style.strokeDashoffset = total - shown;
-            shadow.style.strokeDashoffset = total - shown;
-            const pt = cable.getPointAtLength(shown);
-            const pt2 = cable.getPointAtLength(Math.min(total, shown + 2));
-            const ang = (Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180) / Math.PI - 90;
-            plug.setAttribute("transform", `translate(${pt.x} ${pt.y}) rotate(${ang})`);
-            clip.setAttribute("height", pt.y);
-        }
+    // kabel: panjang tampak mengikuti posisi bawah layar
+    if (total && getComputedStyle(lan).display !== "none") {
+      const max = Math.max(1, docH - window.innerHeight);
+      const target = Math.min(1, (sy + window.innerHeight * 0.55) / (max + window.innerHeight * 0.55));
+      const shown = total * target;
+      cable.style.strokeDashoffset = total - shown;
+      shadow.style.strokeDashoffset = total - shown;
+      const pt = cable.getPointAtLength(shown);
+      const pt2 = cable.getPointAtLength(Math.min(total, shown + 2));
+      const ang = (Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * 180) / Math.PI - 90;
+      plug.setAttribute("transform", `translate(${pt.x} ${pt.y}) rotate(${ang})`);
+      clip.setAttribute("height", pt.y);
     }
-    function request() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
-    window.addEventListener("scroll", request, { passive: true });
-    window.addEventListener("resize", () => { buildCable(); request(); });
-    window.addEventListener("load", () => { buildCable(); onScroll(); });
+  }
+  function request() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
+  window.addEventListener("scroll", request, { passive: true });
+  window.addEventListener("resize", () => { seedExplode(); buildCable(); request(); });
+  window.addEventListener("load", () => { seedExplode(); buildCable(); onScroll(); });
 
-    // Denyut data pada kabel
-    let off = 0, last = 0;
-    (function tick(t) {
-        if (root.dataset.motion !== "reduce" && t - last > 33) {
-            off -= 1.8; last = t;
-            pulse.style.strokeDashoffset = off;
-        }
-        requestAnimationFrame(tick);
-    })(0);
+  // Denyut data pada kabel
+  let off = 0, last = 0;
+  (function tick(t) {
+    if (root.dataset.motion !== "reduce" && t - last > 33) {
+      off -= 1.8; last = t;
+      pulse.style.strokeDashoffset = off;
+    }
+    requestAnimationFrame(tick);
+  })(0);
 
-    buildCable();
-    onScroll();
-    // dokumen bisa berubah tinggi saat gambar/font selesai dimuat
-    if ("ResizeObserver" in window) new ResizeObserver(() => { if (document.documentElement.scrollHeight !== docH) { buildCable(); request(); } }).observe(document.body);
+  seedExplode();
+  buildCable();
+  onScroll();
+  // dokumen bisa berubah tinggi saat gambar/font selesai dimuat
+  if ("ResizeObserver" in window) new ResizeObserver(() => { tops = xps.map(docTop); if (document.documentElement.scrollHeight !== docH) buildCable(); request(); }).observe(document.body);
 })();

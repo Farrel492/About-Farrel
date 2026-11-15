@@ -12,11 +12,10 @@
   const esc = (s) =>
     String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const initials = (n) => (n || "?").split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
-  const delay = (i) => `style="--d:${Math.min(i % 3, 3) * 0.08}s"`;
 
   /* ---------- Slider foto ---------- */
   const PLACEHOLDER =
-    '<figure class="slide nosignal"><div class="bars"></div><b>NO SIGNAL</b><small>tambahkan foto</small></figure>';
+    '<figure class="slide nosignal"><div class="bars"></div><b>NO SIGNAL</b><small>add photo</small></figure>';
 
   function slider(photos, opts) {
     opts = opts || {};
@@ -28,21 +27,41 @@
     return `
       <div class="slider ${opts.contain ? "contain" : ""}" data-count="${list.length}" style="--ratio:${opts.ratio || "16 / 10"}">
         <div class="track">${slides}</div>
-        ${multi ? `<button class="s-btn s-prev" type="button" aria-label="Foto sebelumnya">‹</button><button class="s-btn s-next" type="button" aria-label="Foto berikutnya">›</button>
+        ${multi ? `<button class="s-btn s-prev" type="button" aria-label="Previous photo">‹</button><button class="s-btn s-next" type="button" aria-label="Next photo">›</button>
         <div class="dots">${list.map((_, i) => `<i class="${i === 0 ? "on" : ""}"></i>`).join("")}</div>
         <span class="count">1/${list.length}</span>` : ""}
       </div>`;
   }
 
-  function portBar(label, n) {
-    let ports = "";
-    for (let i = 0; i < 8; i++) ports += `<i class="${(n >> (i % 4)) & 1 && i < 5 ? "on" : ""}"></i>`;
-    return `<div class="card-bar"><span>${esc(label)}</span><span class="ports">${ports}</span></div>`;
+  /* ---------- Container skill berbentuk perangkat ---------- */
+  const ICON = { router: "fa-tower-broadcast", switch: "fa-network-wired", rack: "fa-server", firewall: "fa-shield-halved", browser: "fa-code", cpu: "fa-microchip" };
+  function deviceOf(title, i) {
+    const t = String(title || "").toLowerCase();
+    if (/mikrotik/.test(t)) return "router";
+    if (/cisco|simulasi|simulation|switch/.test(t)) return "switch";
+    if (/routing|route/.test(t)) return "rack";
+    if (/vlan|firewall|security|keamanan/.test(t)) return "firewall";
+    if (/web|database|code|program/.test(t)) return "browser";
+    if (/hardware|pc|cpu|perakitan/.test(t)) return "cpu";
+    return ["router", "switch", "rack", "firewall", "browser", "cpu"][i % 6];
+  }
+  const many = (n, cls, on) => Array.from({ length: n }, (_, k) => `<i class="${on && on(k) ? "on" : ""}"></i>`).join("");
+  function devBar(kind, label) {
+    if (kind === "browser")
+      return `<div class="dev-bar"><span class="dots3"><i></i><i></i><i></i></span><b>${esc(label)}</b><i class="fa-solid ${ICON[kind]}"></i></div>`;
+    return `<div class="dev-bar"><b><i class="fa-solid ${ICON[kind]}"></i>${esc(label)}</b><span class="dev-leds"><i></i><i></i><i></i></span></div>`;
+  }
+  function devFoot(kind, n) {
+    if (kind === "router") return `<div class="dev-foot"><span class="dev-ports r5">${many(5, "", (k) => k === 0 || (n >> k) & 1)}</span></div>`;
+    if (kind === "switch") return `<div class="dev-foot"><span class="dev-ports r24">${many(24, "", (k) => (k * 7 + n) % 5 < 3)}</span></div>`;
+    if (kind === "rack") return `<div class="dev-foot"><span class="bays">${many(4)}</span><span class="vents"></span></div>`;
+    if (kind === "firewall") return `<div class="dev-foot"><span class="bricks"></span></div>`;
+    if (kind === "cpu") return `<div class="dev-foot"><span class="caps">${many(10)}</span></div>`;
+    return "";
   }
 
   /* ---------- Hero & name tag ---------- */
-  document.title = `${P.name} | Portofolio`;
-  $("brand-name").textContent = (P.short || P.name || "").toLowerCase();
+  document.title = `${P.name} | Portfolio`;
   $("hero-name").innerHTML = `${esc(P.firstLine || "")}<span>${esc(P.secondLine || "")}</span>`;
   $("hero-role").textContent = P.role || "";
   $("hero-tagline").textContent = P.tagline || "";
@@ -79,8 +98,8 @@
     reveal.y += (reveal.ty - reveal.y) * 0.12;
     reveal.r += (reveal.tr - reveal.r) * 0.045;   // pelan: membesar / mengecil
     const w = portrait.clientWidth, h = portrait.clientHeight;
-    portrait.style.setProperty("--mx", (reveal.x * w - 12).toFixed(1) + "px");
-    portrait.style.setProperty("--my", (reveal.y * h - 12).toFixed(1) + "px");
+    portrait.style.setProperty("--mx", (reveal.x * w - 10).toFixed(1) + "px");
+    portrait.style.setProperty("--my", (reveal.y * h - 10).toFixed(1) + "px");
     portrait.style.setProperty("--r", Math.max(1, reveal.r).toFixed(1) + "px");
     const moving = Math.abs(reveal.tx - reveal.x) > 0.002 || Math.abs(reveal.ty - reveal.y) > 0.002 || Math.abs(reveal.tr - reveal.r) > 0.5;
     if (moving) reveal.raf = requestAnimationFrame(paint);
@@ -99,71 +118,75 @@
   portrait.addEventListener("blur", () => { reveal.tr = 0; kick(); });
 
   /* ---------- Skill ---------- */
-  $("skill-grid").innerHTML = (D.skills || []).map((s, i) => `
-    <article class="card reveal" ${delay(i)}>
-      ${portBar("SKILL-" + String(i + 1).padStart(2, "0"), i + 3)}
+  $("skill-grid").innerHTML = (D.skills || []).map((s, i) => {
+    const kind = deviceOf(s.title, i);
+    return `
+    <article class="dev dev-${kind} xp">
+      ${devBar(kind, "SKILL-" + String(i + 1).padStart(2, "0"))}
       ${slider(s.photos)}
       <div class="card-body">
         <h3>${esc(s.title)}</h3>
         <p>${esc(s.note)}</p>
         <div class="tags">${(s.tags || []).map((t) => `<span class="tag-chip">${esc(t)}</span>`).join("")}</div>
       </div>
-    </article>`).join("");
+      ${devFoot(kind, i + 3)}
+    </article>`;
+  }).join("");
 
   /* ---------- Pengalaman ---------- */
-  $("exp-list").innerHTML = (D.experiences || []).map((x, i) => `
-    <article class="unit exp reveal" ${delay(i)}>
-      ${slider(x.photos, { ratio: "4 / 3" })}
-      <div>
+  $("exp-list").innerHTML = (D.experiences || []).map((x) => `
+    <article class="exp glass xp ${x.current ? "now" : ""}">
+      <div class="exp-media">${slider(x.photos, { ratio: "4 / 3" })}</div>
+      <div class="exp-body">
         <div class="period">${esc(x.period)}</div>
-        <h3>${esc(x.title)}${x.current ? '<span class="live"><i class="led"></i>AKTIF</span>' : ""}</h3>
-        <div class="place">${esc(x.place)}</div>
+        <h3>${esc(x.title)}${x.current ? '<span class="live"><i class="led"></i>ACTIVE</span>' : ""}</h3>
+        <div class="place"><i class="fa-solid fa-location-dot"></i>${esc(x.place)}</div>
         <p class="desc">${esc(x.text)}</p>
       </div>
     </article>`).join("");
 
   /* ---------- Project ---------- */
-  $("project-grid").innerHTML = (D.projects || []).map((p, i) => `
-    <article class="card reveal" ${delay(i)}>
-      ${portBar(String(p.type || "PROJECT").toUpperCase(), i + 6)}
-      ${slider(p.photos)}
-      <div class="card-body">
+  $("project-grid").innerHTML = (D.projects || []).map((p) => `
+    <article class="proj glass xp">
+      <div class="proj-media">
+        ${slider(p.photos)}
+        <span class="pill">${esc([].concat(p.type || "PROJECT").join(" · "))}</span>
+      </div>
+      <div class="proj-body">
         <h3>${esc(p.title)}</h3>
         <p>${esc(p.text)}</p>
         <div class="tags">${(p.tags || []).map((t) => `<span class="tag-chip">${esc(t)}</span>`).join("")}</div>
         <div class="proj-links">
-          ${p.github ? `<a class="port-link" href="${esc(p.github)}" target="_blank" rel="noopener">GitHub ↗</a>` : ""}
-          ${p.demo ? `<a class="port-link solid" href="${esc(p.demo)}" target="_blank" rel="noopener">Demo ↗</a>` : ""}
+          ${p.github ? `<a class="port-link" href="${esc(p.github)}" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i>GitHub</a>` : ""}
+          ${p.demo ? `<a class="port-link solid" href="${esc(p.demo)}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i>Demo</a>` : ""}
         </div>
       </div>
     </article>`).join("");
 
   /* ---------- Sertifikat ---------- */
-  $("cert-grid").innerHTML = (D.certificates || []).map((c, i) => `
-    <article class="card cert reveal" ${delay(i)}>
-      ${slider(c.photos, { ratio: "4 / 3", contain: true })}
-      <div class="card-body">
+  $("cert-grid").innerHTML = (D.certificates || []).map((c) => `
+    <article class="cert glass xp">
+      <div class="cert-media">${slider(c.photos, { ratio: "4 / 3", contain: true })}</div>
+      <div class="cert-body">
         <h3>${esc(c.title)}</h3>
         <p>${esc(c.issuer)} · ${esc(c.year)}</p>
       </div>
     </article>`).join("");
 
-  /* ---------- Kontak ---------- */
+  /* ---------- Kontak (ikon asli) ---------- */
   const L = P.links || {};
   const jacks = [
-    L.email && { t: "Email", s: L.email, href: `mailto:${L.email}`, c: "#5aa9ff" },
-    L.github && { t: "GitHub", s: L.github.replace(/^https?:\/\//, ""), href: L.github, c: "#ffc94d" },
-    L.linkedin && { t: "LinkedIn", s: L.linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: L.linkedin, c: "#62e58f" },
-    L.youtube && { t: "YouTube", s: L.youtube.replace(/^https?:\/\/(www\.)?/, ""), href: L.youtube, c: "#ff6b6b" },
-    L.whatsapp && { t: "WhatsApp", s: "Kirim pesan", href: `https://wa.me/${L.whatsapp}`, c: "#f2ecd8" }
+    L.email && { t: "Email", s: L.email, href: `mailto:${L.email}`, c: "#ea4335", i: "fa-solid fa-envelope" },
+    L.github && { t: "GitHub", s: L.github.replace(/^https?:\/\/(www\.)?/, ""), href: L.github, c: "#24292f", i: "fa-brands fa-github" },
+    L.linkedin && { t: "LinkedIn", s: L.linkedin.replace(/^https?:\/\/(www\.)?/, ""), href: L.linkedin, c: "#0a66c2", i: "fa-brands fa-linkedin-in" },
+    L.youtube && { t: "YouTube", s: L.youtube.replace(/^https?:\/\/(www\.)?/, ""), href: L.youtube, c: "#ff0000", i: "fa-brands fa-youtube" },
+    L.whatsapp && { t: "WhatsApp", s: "Send a message", href: `https://wa.me/${L.whatsapp}`, c: "#25d366", i: "fa-brands fa-whatsapp" }
   ].filter(Boolean);
   $("contact-grid").innerHTML = jacks.map((j) => `
-    <a class="jack" href="${esc(j.href)}" ${j.href.indexOf("http") === 0 ? 'target="_blank" rel="noopener"' : ""} style="--c:${j.c}">
-      <span class="jack-cable"></span><span class="jack-plug"></span>
-      <span class="jack-text"><b>${esc(j.t)}</b><small>${esc(j.s)}</small></span>
+    <a class="chip glass xp" href="${esc(j.href)}" ${j.href.indexOf("http") === 0 ? 'target="_blank" rel="noopener"' : ""} style="--c:${j.c}">
+      <span class="ico"><i class="${j.i}"></i></span>
+      <span class="chip-text"><b>${esc(j.t)}</b><small>${esc(j.s)}</small></span>
     </a>`).join("");
-
-  $("footer-text").textContent = `© ${new Date().getFullYear()} ${P.name} · dibuat dengan HTML, CSS, JavaScript & Three.js`;
 
   /* ---------- Foto yang gagal dimuat -> layar NO SIGNAL ---------- */
   document.addEventListener("error", (e) => {
@@ -172,7 +195,7 @@
     const fig = img.closest(".slide");
     if (!fig) return;
     fig.className = "slide nosignal";
-    fig.innerHTML = '<div class="bars"></div><b>NO SIGNAL</b><small>foto tidak ditemukan</small>';
+    fig.innerHTML = '<div class="bars"></div><b>NO SIGNAL</b><small>photo not found</small>';
   }, true);
 
   /* ---------- Perilaku slider: geser dengan mouse/sentuh, panah, titik ---------- */
