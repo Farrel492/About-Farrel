@@ -31,9 +31,11 @@
   }
 
   function layout(reset) {
-    W = window.innerWidth; H = window.innerHeight;
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    cv.width = W * dpr; cv.height = H * dpr;
+    W = window.innerWidth;
+    H = Math.min(window.innerHeight, 1400);   // kanvas tidak perlu menutupi layar yang sangat tinggi (HP)
+    dpr = Math.min(window.devicePixelRatio || 1, window.matchMedia("(pointer: coarse)").matches ? 1.25 : 2);
+    cv.style.width = W + "px"; cv.style.height = H + "px";
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const ax = anchorX(), ay = -24 - sy();
     if (reset || !pts.length) {
