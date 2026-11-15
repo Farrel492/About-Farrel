@@ -21,7 +21,7 @@
 
     const mobile = window.matchMedia("(max-width: 768px)").matches;
     const reduced = () => root.dataset.motion === "reduce";
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.25 : 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile || window.matchMedia("(pointer: coarse)").matches ? 1.25 : 1.75));
 
     /* ---------- Dasar scene ---------- */
     const FOG = 0x3a4757;

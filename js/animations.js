@@ -41,17 +41,46 @@
     tops = xps.map(docTop);
     lastP = xps.map(() => -1);
   }
+  // p dikejar pelan-pelan (bukan langsung mengikuti scroll), jadi tetap terlihat walau scroll cepat
+  let target = [], cur = [], xRaf = 0, xLast = 0;
   function explode() {
     const reduce = root.dataset.motion === "reduce";
     const vh = window.innerHeight, sy = window.scrollY;
+    const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
     xps.forEach((el, i) => {
       let p = 1;
       if (!reduce) {
         const lag = (i % 3) * 46;
-        const t = clamp((vh * 0.98 - (tops[i] - sy) - lag) / (vh * 0.5));
+        // elemen di dasar halaman tidak bisa naik sampai tengah layar: garis selesai disesuaikan
+        const rest = tops[i] - maxScroll;
+        const finish = Math.max(vh * 0.45, rest + 110);
+        const range = Math.max(60, vh * 0.98 - finish);
+        const t = clamp((vh * 0.98 - (tops[i] - sy) - lag) / range);
         p = t * t * (3 - 2 * t);
       }
-      if (Math.abs(p - lastP[i]) > 0.003) { lastP[i] = p; el.style.setProperty("--p", p.toFixed(3)); }
+      target[i] = p;
+      if (reduce) cur[i] = p;
+    });
+    if (reduce) { paintExplode(true); return; }
+    if (!xRaf) { xLast = performance.now(); xRaf = requestAnimationFrame(stepExplode); }
+  }
+  function stepExplode(t) {
+    xRaf = 0;
+    const k = 1 - Math.pow(1 - 0.045, Math.min(64, t - xLast) / 16.67);
+    xLast = t;
+    let busy = false;
+    xps.forEach((el, i) => {
+      if (cur[i] == null) cur[i] = target[i];
+      const d = target[i] - cur[i];
+      if (Math.abs(d) > 0.002) { cur[i] += d * k; busy = true; } else cur[i] = target[i];
+    });
+    paintExplode(false);
+    if (busy) xRaf = requestAnimationFrame(stepExplode);
+  }
+  function paintExplode(force) {
+    xps.forEach((el, i) => {
+      const p = cur[i] == null ? 1 : cur[i];
+      if (force || Math.abs(p - lastP[i]) > 0.002) { lastP[i] = p; el.style.setProperty("--p", p.toFixed(3)); }
     });
   }
   window.addEventListener("motionchange", () => { lastP = xps.map(() => -1); explode(); });
