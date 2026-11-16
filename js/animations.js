@@ -24,6 +24,20 @@
   setMotion(store.get("motion") || (prefersReduce ? "reduce" : "full"), false);
   motionBtn.addEventListener("click", () => setMotion(root.dataset.motion === "reduce" ? "full" : "reduce", true));
 
+  /* ---------- Mode ringan untuk HP / layar sentuh ---------- */
+  const lite = window.matchMedia("(pointer: coarse)").matches;
+  if (lite) root.classList.add("lite");
+
+  // Hero memenuhi layar pertama pada layar potret (HP), tanpa bergantung pada satuan vh
+  const hero = $("hero");
+  let heroW = 0;
+  function fitHero() {
+    if (window.innerWidth === heroW) return;
+    heroW = window.innerWidth;
+    hero.style.minHeight = window.innerHeight > window.innerWidth ? window.innerHeight + "px" : "";
+  }
+  fitHero();
+
   /* ---------- Explode view: elemen berserakan, lalu menyatu saat di-scroll ---------- */
   const xps = [...document.querySelectorAll(".xp")];
   const rnd = (i, k) => { const v = Math.sin(i * 127.1 + k * 311.7) * 43758.5453; return v - Math.floor(v); };
@@ -43,7 +57,15 @@
   }
   // p dikejar pelan-pelan (bukan langsung mengikuti scroll), jadi tetap terlihat walau scroll cepat
   let target = [], cur = [], xRaf = 0, xLast = 0;
+  // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar, bukan mengikuti scroll
+  if (lite && "IntersectionObserver" in window) {
+    const io = new IntersectionObserver((list) => list.forEach((en) => {
+      if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+    }), { rootMargin: "0px 0px -10% 0px", threshold: 0.04 });
+    xps.forEach((el) => io.observe(el));
+  }
   function explode() {
+    if (lite) return;
     const reduce = root.dataset.motion === "reduce";
     const vh = window.innerHeight, sy = window.scrollY;
     const maxScroll = Math.max(0, document.documentElement.scrollHeight - vh);
@@ -147,13 +169,13 @@
   }
   function request() { if (!ticking) { ticking = true; requestAnimationFrame(onScroll); } }
   window.addEventListener("scroll", request, { passive: true });
-  window.addEventListener("resize", () => { seedExplode(); buildCable(); request(); });
+  window.addEventListener("resize", () => { fitHero(); seedExplode(); buildCable(); request(); });
   window.addEventListener("load", () => { seedExplode(); buildCable(); onScroll(); });
 
   // Denyut data pada kabel
   let off = 0, last = 0;
   (function tick(t) {
-    if (root.dataset.motion !== "reduce" && t - last > 33) {
+    if (!lite && root.dataset.motion !== "reduce" && t - last > 33) {
       off -= 1.8; last = t;
       pulse.style.strokeDashoffset = off;
     }

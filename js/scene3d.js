@@ -9,11 +9,11 @@
   "use strict";
   const canvas = document.getElementById("bg");
   if (!canvas || !window.THREE) return;
-
   const root = document.documentElement;
+  const coarse = window.matchMedia("(pointer: coarse)").matches; // HP / tablet
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: "high-performance" });
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: "high-performance" });
   } catch (err) {
     canvas.style.display = "none";
     return;
@@ -21,11 +21,10 @@
 
   const mobile = window.matchMedia("(max-width: 768px)").matches;
   const reduced = () => root.dataset.motion === "reduce";
-  const coarse = window.matchMedia("(pointer: coarse)").matches; // HP / tablet
   // resolusi render dibatasi: di HP layar logisnya sangat besar, jadi jumlah pixel dibatasi agar ringan
   function pixelRatio(w, h) {
     let r = Math.min(window.devicePixelRatio || 1, mobile || coarse ? 1.25 : 1.75);
-    if (mobile || coarse) r = Math.min(r, Math.sqrt(1400000 / (w * h)));
+    if (mobile || coarse) r = Math.min(r, Math.sqrt(850000 / (w * h)));
     return Math.max(0.5, r);
   }
   renderer.setPixelRatio(pixelRatio(window.innerWidth, window.innerHeight));
