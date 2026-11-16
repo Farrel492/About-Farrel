@@ -58,12 +58,19 @@
   // p dikejar pelan-pelan (bukan langsung mengikuti scroll), jadi tetap terlihat walau scroll cepat
   let target = [], cur = [], xRaf = 0, xLast = 0;
   // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar, bukan mengikuti scroll
-  if (lite && "IntersectionObserver" in window) {
+    if (lite && "IntersectionObserver" in window) {
     const io = new IntersectionObserver((list) => list.forEach((en) => {
       if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
-    }), { rootMargin: "0px 0px -10% 0px", threshold: 0.04 });
+    }), { rootMargin: "0px", threshold: 0 });
     xps.forEach((el) => io.observe(el));
+    // di dasar halaman: semua elemen yang tersisa (Contact) langsung dimunculkan
+    window.addEventListener("scroll", () => {
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80) {
+        xps.forEach((el) => el.classList.add("in"));
+      }
+    }, { passive: true });
   }
+  
   function explode() {
     if (lite) return;
     const reduce = root.dataset.motion === "reduce";
