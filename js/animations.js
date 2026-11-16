@@ -57,20 +57,22 @@
   }
   // p dikejar pelan-pelan (bukan langsung mengikuti scroll), jadi tetap terlihat walau scroll cepat
   let target = [], cur = [], xRaf = 0, xLast = 0;
-  // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar, bukan mengikuti scroll
-    if (lite && "IntersectionObserver" in window) {
+
+  // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar.
+  // Semua elemen terlihat secara default; baru disembunyikan (class "armed") setelah pemantau siap.
+  if (lite && "IntersectionObserver" in window) {
+    const show = (el) => el.classList.add("in");
     const io = new IntersectionObserver((list) => list.forEach((en) => {
-      if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); }
+      if (en.isIntersecting) { show(en.target); io.unobserve(en.target); }
     }), { rootMargin: "0px", threshold: 0 });
     xps.forEach((el) => io.observe(el));
+    root.classList.add("armed");
     // di dasar halaman: semua elemen yang tersisa (Contact) langsung dimunculkan
     window.addEventListener("scroll", () => {
-      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80) {
-        xps.forEach((el) => el.classList.add("in"));
-      }
+      if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80) xps.forEach(show);
     }, { passive: true });
   }
-  
+
   function explode() {
     if (lite) return;
     const reduce = root.dataset.motion === "reduce";

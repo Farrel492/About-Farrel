@@ -282,8 +282,11 @@ main { position: relative; z-index: 2; overflow: clip; }
   .lan { display: none; }
 }
 
-/* Mode ringan (HP): efek berserakan -> menyatu dijalankan sekali lewat transisi CSS */
-html.lite .xp { transform: translate3d(var(--ox), var(--oy), 0) rotate(var(--or)) scale(.92); opacity: .08; transition: transform .8s cubic-bezier(.2, .75, .2, 1), opacity .8s ease; }
+/* Mode ringan (HP): elemen terlihat secara default.
+   Baru setelah JS siap (class "armed") elemen yang belum masuk layar disembunyikan,
+   lalu menyatu sekali lewat transisi CSS saat masuk layar. */
+html.lite .xp { transition: transform .8s cubic-bezier(.2, .75, .2, 1), opacity .8s ease; }
+html.lite.armed .xp:not(.in) { transform: translate3d(var(--ox), var(--oy), 0) rotate(var(--or)) scale(.92); opacity: .08; }
 html.lite .xp.in { transform: none; opacity: 1; }
 
 /* ---------- Kurangi animasi ---------- */
