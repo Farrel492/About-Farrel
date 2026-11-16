@@ -60,14 +60,20 @@
 
   // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar.
   // Semua elemen terlihat secara default; baru disembunyikan (class "armed") setelah pemantau siap.
-  if (lite && "IntersectionObserver" in window) {
-    const show = (el) => el.classList.add("in");
+    if (lite && "IntersectionObserver" in window) {
+    const order = new Map(xps.map((el, i) => [el, i]));
+    const show = (el) => {
+      if (el.classList.contains("in")) return;
+      el.style.transitionDelay = ((order.get(el) % 3) * 0.14).toFixed(2) + "s"; // jeda kecil antar kartu
+      el.classList.add("in");
+    };
+    // elemen baru menyatu setelah naik sampai ~65% tinggi layar, jadi bagian bawah layar tetap berantakan
     const io = new IntersectionObserver((list) => list.forEach((en) => {
       if (en.isIntersecting) { show(en.target); io.unobserve(en.target); }
-    }), { rootMargin: "0px", threshold: 0 });
+    }), { rootMargin: "0px 0px -35% 0px", threshold: 0 });
     xps.forEach((el) => io.observe(el));
     root.classList.add("armed");
-    // di dasar halaman: semua elemen yang tersisa (Contact) langsung dimunculkan
+    // di dasar halaman: semua elemen yang tersisa (Contact) tetap dimunculkan
     window.addEventListener("scroll", () => {
       if (window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80) xps.forEach(show);
     }, { passive: true });
