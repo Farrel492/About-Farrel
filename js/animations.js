@@ -58,9 +58,9 @@
   // p dikejar pelan-pelan (bukan langsung mengikuti scroll), jadi tetap terlihat walau scroll cepat
   let target = [], cur = [], xRaf = 0, xLast = 0;
 
-  // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen masuk layar.
+  // HP: efek menyatu dijalankan sekali per elemen (transisi CSS) saat elemen naik di layar.
   // Semua elemen terlihat secara default; baru disembunyikan (class "armed") setelah pemantau siap.
-    if (lite && "IntersectionObserver" in window) {
+  if (lite && "IntersectionObserver" in window) {
     const order = new Map(xps.map((el, i) => [el, i]));
     const show = (el) => {
       if (el.classList.contains("in")) return;
@@ -202,4 +202,12 @@
   onScroll();
   // dokumen bisa berubah tinggi saat gambar/font selesai dimuat
   if ("ResizeObserver" in window) new ResizeObserver(() => { tops = xps.map(docTop); if (document.documentElement.scrollHeight !== docH) buildCable(); request(); }).observe(document.body);
+
+  // --- DIAGNOSIS SEMENTARA: hapus blok ini setelah masalah ketemu ---
+  const dbg = document.createElement("div");
+  dbg.style.cssText = "position:fixed;left:20px;bottom:20px;z-index:99;padding:10px 18px;background:rgba(0,0,0,.85);color:#6f6;font:36px monospace;border-radius:12px";
+  const upd = () => { dbg.textContent = "v3 lite=" + lite + " motion=" + root.dataset.motion + " armed=" + root.classList.contains("armed"); };
+  upd();
+  window.addEventListener("motionchange", upd);
+  document.body.appendChild(dbg);
 })();
