@@ -10,7 +10,9 @@
   const canvas = document.getElementById("bg");
   if (!canvas || !window.THREE) return;
   const root = document.documentElement;
-  const coarse = window.matchMedia("(pointer: coarse)").matches; // HP / tablet
+  const coarse = window.matchMedia("(pointer: coarse)").matches
+    || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    || Math.min(screen.width, screen.height) < 600; // HP / tablet
   let renderer;
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: !coarse, powerPreference: "high-performance" });

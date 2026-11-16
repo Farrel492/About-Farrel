@@ -25,7 +25,9 @@
   motionBtn.addEventListener("click", () => setMotion(root.dataset.motion === "reduce" ? "full" : "reduce", true));
 
   /* ---------- Mode ringan untuk HP / layar sentuh ---------- */
-  const lite = window.matchMedia("(pointer: coarse)").matches;
+  const lite = window.matchMedia("(pointer: coarse)").matches
+    || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+    || Math.min(screen.width, screen.height) < 600;
   if (lite) root.classList.add("lite");
 
   // Hero memenuhi layar pertama pada layar potret (HP), tanpa bergantung pada satuan vh
@@ -202,12 +204,4 @@
   onScroll();
   // dokumen bisa berubah tinggi saat gambar/font selesai dimuat
   if ("ResizeObserver" in window) new ResizeObserver(() => { tops = xps.map(docTop); if (document.documentElement.scrollHeight !== docH) buildCable(); request(); }).observe(document.body);
-
-  // --- DIAGNOSIS SEMENTARA: hapus blok ini setelah masalah ketemu ---
-  const dbg = document.createElement("div");
-  dbg.style.cssText = "position:fixed;left:20px;bottom:20px;z-index:99;padding:10px 18px;background:rgba(0,0,0,.85);color:#6f6;font:36px monospace;border-radius:12px";
-  const upd = () => { dbg.textContent = "v3 lite=" + lite + " motion=" + root.dataset.motion + " armed=" + root.classList.contains("armed"); };
-  upd();
-  window.addEventListener("motionchange", upd);
-  document.body.appendChild(dbg);
 })();
